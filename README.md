@@ -1,19 +1,20 @@
 <div align="center">
   <img src="resources/AppIcon60x60@2x.png" width="88" alt="Flappy Bird 原版图标" />
 
-# Flappy Bird · iOS 120Hz
+# Flappy Bird · arm64 + Metal
 
-**把 Flappy Bird 1.2 带到现代 iPhone：原版像素画面与音效，原生 Metal，全屏适配，最高 120Hz 渲染。**
+**将 32 位 Flappy Bird 1.2 迁移到现代 64 位 iPhone：arm64 原生应用、Metal 原生渲染，适配 iOS 27。**
 
-Native Objective-C++ / Metal revival of Flappy Bird 1.2 for modern iPhones.
+A 64-bit Flappy Bird 1.2 revival for iOS 27, powered by native Objective-C++ and Metal.
 
-[![Build and test](https://github.com/Pingfan1337/FlappyBird-iOS-120Hz/actions/workflows/build.yml/badge.svg)](https://github.com/Pingfan1337/FlappyBird-iOS-120Hz/actions/workflows/build.yml)
+[![Build and test](https://github.com/Pingfan1337/FlappyBird-arm64-Metal-iOS27/actions/workflows/build.yml/badge.svg)](https://github.com/Pingfan1337/FlappyBird-arm64-Metal-iOS27/actions/workflows/build.yml)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-111827?logo=apple)
 ![Rendering](https://img.shields.io/badge/Renderer-Metal-60a5fa)
-![Refresh](https://img.shields.io/badge/Refresh-up%20to%20120Hz-22c55e)
+![Architecture](https://img.shields.io/badge/Architecture-arm64-22c55e)
+![Validated](https://img.shields.io/badge/Validated-iOS%2027-8b5cf6)
 ![Build](https://img.shields.io/badge/App%20build-12005-8b5cf6)
 
-[下载最新 IPA](https://github.com/Pingfan1337/FlappyBird-iOS-120Hz/releases/latest) · [安装方法](#安装) · [从源码构建](#从源码构建) · [流畅度改造](#流畅度改造) · [已知限制](#已知限制)
+[下载最新 IPA](https://github.com/Pingfan1337/FlappyBird-arm64-Metal-iOS27/releases/latest) · [安装方法](#安装) · [从源码构建](#从源码构建) · [流畅度改造](#流畅度改造) · [已知限制](#已知限制)
 
 </div>
 
@@ -34,7 +35,16 @@ Native Objective-C++ / Metal revival of Flappy Bird 1.2 for modern iPhones.
 
 ## 项目简介
 
-这是一次从旧版 32 位应用到现代 arm64 原生应用的非官方迁移。以 Flappy Bird **1.2** 的资源和可分析程序为依据，重建玩法逻辑，并用现代 Apple 框架实现显示、音频与系统入口。
+本项目的核心是 **64 位兼容、Metal 原生渲染和 iOS 27 适配**。以旧版 32 位 Flappy Bird **1.2** 的资源和可分析程序为依据，重建玩法逻辑，生成现代 iPhone 可运行的 **arm64 原生应用**，并用现代 Apple 框架实现显示、音频与系统入口。
+
+| 迁移重点 | 当前实现 |
+|---|---|
+| 32 位 → 64 位 | 从旧版 ARMv7 程序分析并重建为 arm64 应用 |
+| 原生渲染 | Metal + CAMetalLayer + CAMetalDisplayLink |
+| 目标系统 | 支持 iOS 27，作者在 iPhone 17 Pro Max 上验证 |
+| 系统下限 | iOS 17；其他机型与系统的覆盖仍需验证 |
+
+高刷新率、全屏布局和低延迟音频是现代化体验的一部分。
 
 项目经过了几轮真机反馈：先打通启动和签名安装，再修复全屏黑边、地面遮挡、顶部高度限制，最后处理“FPS 很高，运动却仍有顿挫”的问题。当前公开版本是这条迭代链的 **12005** 构建。
 
@@ -59,7 +69,7 @@ Native Objective-C++ / Metal revival of Flappy Bird 1.2 for modern iPhones.
 
 ### 下载 Release
 
-1. 打开 [Releases](https://github.com/Pingfan1337/FlappyBird-iOS-120Hz/releases/latest)。
+1. 打开 [Releases](https://github.com/Pingfan1337/FlappyBird-arm64-Metal-iOS27/releases/latest)。
 2. 下载 `FlappyBird-1.2-Metal-smooth-unsigned.ipa`。
 3. 将文件传到 iPhone，用自己的有效证书和描述文件重新签名；项目作者使用轻松签完成真机安装。
 4. 按签名工具和 iOS 的提示完成安装，打开 **Flappy Bird**。
@@ -97,8 +107,8 @@ shasum -a 256 -c SHA256SUMS.txt
 **不需要下载 iOS 模拟器运行时，也不需要安装第三方 Python 包。** 构建脚本直接使用 Xcode 的 clang、iPhoneOS SDK 和系统框架。
 
 ```bash
-git clone https://github.com/Pingfan1337/FlappyBird-iOS-120Hz.git
-cd FlappyBird-iOS-120Hz
+git clone https://github.com/Pingfan1337/FlappyBird-arm64-Metal-iOS27.git
+cd FlappyBird-arm64-Metal-iOS27
 
 # 确认设备 SDK
 xcrun --sdk iphoneos --show-sdk-path
@@ -239,7 +249,7 @@ GitHub Actions 会执行主机回归和未签名 IPA 构建，不在 CI 中运�
 
 ## 反馈问题
 
-欢迎通过 [Issues](https://github.com/Pingfan1337/FlappyBird-iOS-120Hz/issues) 提交问题。建议附上：
+欢迎通过 [Issues](https://github.com/Pingfan1337/FlappyBird-arm64-Metal-iOS27/issues) 提交问题。建议附上：
 
 - iPhone 型号、iOS 版本、应用构建号。
 - 从启动到问题出现的复现步骤。

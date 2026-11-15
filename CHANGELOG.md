@@ -2,7 +2,7 @@
 
 ## v1.0.0 — 2026-11-16
 
-First public release. Game display version: **1.2**. Native application build: **12005**.
+First public release: an arm64-native, Metal-rendered revival targeting iOS 27. Game display version: **1.2**. Native application build: **12005**.
 
 ### Native runtime
 
