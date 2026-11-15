@@ -1,0 +1,29 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+      - name: Host regression checks
+        run: python3 scripts/test.py
+      - name: Build unsigned device IPA
+        run: python3 scripts/build.py
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: FlappyBird-unsigned-IPA
+          path: |
+            dist/*.ipa
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
