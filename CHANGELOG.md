@@ -6,7 +6,7 @@ Experimental universal compatibility candidate, app build **12006**. Target rang
 
 - One FAT32 IPA executable with armv7 / iOS 5 and arm64 / iOS 7 slices.
 - OpenGL ES 2 renderer for legacy systems; retain native Metal and CAMetalDisplayLink on modern systems. CADisplayLink provides the fallback scheduler.
-- Share gameplay, vertex layout, atlas decoding, interpolation and full-screen composition between renderers.
+- Share gameplay, vertex layout, atlas decoding, interpolation and full-screen composition between renderers. Extend skyline and ground tiles horizontally on 3:2 phones and 3:4 iPads without moving gameplay objects.
 - Preloaded AVAudioPlayer fallback before iOS 8, keeping playback work on the audio queue.
 - AppDelegate window startup before iOS 13, guarded modern APIs, weak framework imports, legacy launch images/icons and an iOS 8+ launch storyboard.
 - Pinned legacy SDK/C++ headers bootstrap with SHA-256 checks; compile ARC objects separately to avoid libarclite injection. Locally provide availability checks using iOS 5 APIs.

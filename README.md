@@ -80,6 +80,8 @@ A native Flappy Bird 1.2 revival: arm64 + Metal for modern iOS, with an experime
 
 两套后端共享逻辑、顶点、图集、布局和运动插值，继续保留全屏地面遮挡、屏幕外飞行及固定 60Hz 玩法。未恢复旧游戏引擎，兼容路径也没有改回 30FPS 模拟。
 
+<p align="center"><img src="docs/images/compat-4s.png" width="280" alt="4S 3:2 视口的兼容渲染检查，天空城市与地面纹理覆盖左右边缘" /><br />4S 尺寸（640×960）的桌面 OpenGL 离屏检查图；不是手机截图。</p>
+
 “全机型”仍是验证目标。签名工具是否保留两个切片、老系统安装环境、iPad 布局以及每个系统的驱动行为，都需要分别实测；不把降低 Info.plist 版本号当作兼容证明。
 
 ## 安装
@@ -233,7 +235,9 @@ flowchart TD
 
 全屏版保留核心区域的比例，并延伸天空和地面。顶部起跳截止线按实际视野上边界重新计算，小鸟可以完整飞出屏幕，在有限上升后自然回落；上管道的轴和碰撞范围随之向上延伸。地面以原有前景顺序遮住下方管道。
 
-这些是面向现代屏幕的适配。项目仍在还原和验证中，不宣称与原版逐像素、逐帧完全等价。
+在 4S 的 3:2 屏幕和 iPad 的 3:4 屏幕上，背景城市与地面纹理向左右平铺延伸，玩法物体的位置和大小保持不变。
+
+这些是面向不同屏幕的适配。项目仍在还原和验证中，不宣称与原版逐像素、逐帧完全等价。
 
 ## 测试与验证
 
@@ -261,7 +265,7 @@ python3 scripts/audit_sdk.py --sdk /path/to/iPhoneOS5.0.sdk \
   --binary build/device/FlappyBird-armv7 --arch armv7
 ```
 
-兼容候选另完成 armv7 / arm64 编译、IPA 完整性、原资源哈希、传统 dyld 入口与弱依赖审计。桌面 GPU 使用同一套 GLSL / Metal 着色器和绘制数据做离屏对比：平均通道差约 `0.000011`、最大差 `1/255`，没有通道差超过 `2/255`，地面遮挡像素检查通过。**桌面 OpenGL 结果不能证明 iPhone 的 OpenGL ES 驱动已经通过测试。**
+兼容候选另完成 armv7 / arm64 编译、IPA 完整性、原资源哈希、传统 dyld 入口与弱依赖审计。桌面 GPU 分别按现代屏幕与 4S 尺寸，使用同一套 GLSL / Metal 着色器和绘制数据做离屏对比：平均通道差约 `0.000011`、最大差 `1/255`，没有通道差超过 `2/255`，地面遮挡像素检查通过。**桌面 OpenGL 结果不能证明 iPhone 的 OpenGL ES 驱动已经通过测试。**
 
 可在有本机 GPU 的 Mac 上复现：
 
@@ -270,9 +274,10 @@ xcrun clang++ -std=c++17 -O2 -fobjc-arc -Wno-deprecated-declarations \
   -framework Foundation -framework CoreGraphics -framework ImageIO \
   -framework OpenGL -framework Metal scripts/check_renderers.mm -o build/check_renderers
 ./build/check_renderers
+./build/check_renderers --legacy-4s
 ```
 
-输出 `build/compat-opengl.png` 和 `build/compat-metal.png`。`scripts/audit_ipa.py` 的报告明确标记旧设备执行待测；它检查一组已知新 API 与实际链接信息，不能穷尽所有系统运行行为。
+输出 `build/compat-opengl.png` 和 `build/compat-metal.png`；4S 检查输出对应的 `compat-4s-*.png`。`scripts/audit_ipa.py` 的报告明确标记旧设备执行待测；它检查一组已知新 API 与实际链接信息，不能穷尽所有系统运行行为。
 
 主机测试和离屏渲染不能替代真机验证。当前真机反馈来自项目作者的使用体验，尚无覆盖所有设备、温控、音频路由与长时间运行场景的测试报告。
 

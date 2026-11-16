@@ -109,7 +109,23 @@ inline void composeFrame(const OriginalGame& game,const std::vector<Draw>& old,f
                 // Only the textured top strip is needed over the solid fill.
                 s.h=32;
             }
-            add(s,x+layout.offsetX,y+layout.offsetY,s.w,s.h,alpha,angle);
+            // Shorter phones and iPads expose space beside the 288px playfield.
+            // Continue the decorative skyline/ground there without scaling or
+            // moving gameplay objects, and preserve the scrolling tile phase.
+            float drawX=x+layout.offsetX;
+            if(d.name=="land"&&layout.offsetX>0) {
+                // Use an interior 24px repeat rather than the atlas rectangle's
+                // outer edge, which otherwise leaves a vertical seam in-field.
+                Sprite repeat=s;repeat.x+=24;repeat.w=24;
+                float tile=drawX-24*std::ceil(drawX/24);
+                for(;tile<layout.width;tile+=24)add(repeat,tile,y+layout.offsetY,24,s.h,alpha,angle);
+                continue;
+            }
+            if((d.name=="bg_day"||d.name=="bg_night"||d.name=="land")&&s.w>0) {
+                for(float tile=drawX-s.w;tile+s.w>0;tile-=s.w)add(s,tile,y+layout.offsetY,s.w,s.h,alpha,angle);
+                for(float tile=drawX+s.w;tile<layout.width;tile+=s.w)add(s,tile,y+layout.offsetY,s.w,s.h,alpha,angle);
+            }
+            add(s,drawX,y+layout.offsetY,s.w,s.h,alpha,angle);
         }
     }
     for(auto& q:out){q.x+=game.shakeX;q.y+=game.shakeY;}

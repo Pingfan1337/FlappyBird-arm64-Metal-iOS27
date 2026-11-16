@@ -47,13 +47,27 @@ int main() {
     g.draws={{"pipe_up",150,300,0,1},{"land",-2,400,0,1}};
     for(auto l:{ViewLayout::make(440,956,62,34),ViewLayout::make(320,568),ViewLayout::make(320,480)}) {
         composeFrame(g,{},1,l,q);
-        assert(q.size()==5);
-        const auto& pipe=q[2];const auto& mask=q[3];const auto& strip=q[4];
+        assert(q.size()>=5);
+        const auto& pipe=q[2];const auto& mask=q[3];const auto& strip=q.back();
         assert(pipe.y+pipe.h>mask.y);
         assert(mask.y==l.offsetY+400&&mask.y+mask.h>=l.height);
         assert(mask.x<=0&&mask.x+mask.w>=l.width);
         assert(mask.uw==0&&mask.vh==0&&mask.alpha==1);
         assert(strip.y==mask.y&&strip.h==32);
+    }
+    // The 4S and iPad have wider logical viewports than the original playfield.
+    // Both skyline and textured ground must reach their left and right edges.
+    g.draws={{"bg_day",0,0,0,1},{"land",-23,400,0,1}};
+    for(auto l:{ViewLayout::make(320,480),ViewLayout::make(768,1024),ViewLayout::make(440,956,62,34)}) {
+        composeFrame(g,{},1,l,q);
+        for(float x:{.25f,l.width/2,l.width-.25f}) {
+            bool skyline=false,ground=false;
+            for(const auto& tile:q)if(x>=tile.x&&x<tile.x+tile.w&&tile.uw>0) {
+                skyline|=tile.y==l.offsetY&&tile.h==400;
+                ground|=tile.y==l.offsetY+400&&tile.h==32;
+            }
+            assert(skyline&&ground);
+        }
     }
     std::cout<<"Presentation checks passed: refresh-rate-independent gameplay, interpolation, wrapping, full-screen coverage and touch mapping\n";
 }
