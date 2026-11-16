@@ -1,0 +1,41 @@
+#import <Foundation/Foundation.h>
+#import <CoreGraphics/CoreGraphics.h>
+#import <ImageIO/ImageIO.h>
+#import <Metal/Metal.h>
+#import <OpenGL/OpenGL.h>
+#import <OpenGL/gl.h>
+#import <OpenGL/glext.h>
+#include "../src/App/AtlasPixels.hpp"
+#include "../src/App/MetalGeometry.hpp"
+#include "../src/App/GLShaders.hpp"
+#include "../src/App/Shaders.hpp"
+#include <fstream>
+#include <iostream>
+using namespace flappy12;
+static const int W=660,H=1434;
+static void save(const std::vector<uint8_t>& pixels,NSString* name){
+ CGColorSpaceRef cs=CGColorSpaceCreateDeviceRGB();CGContextRef ctx=CGBitmapContextCreate((void*)pixels.data(),W,H,8,W*4,cs,kCGImageAlphaPremultipliedLast|kCGBitmapByteOrder32Big);CGImageRef img=CGBitmapContextCreateImage(ctx);CGImageDestinationRef dst=CGImageDestinationCreateWithURL((__bridge CFURLRef)[NSURL fileURLWithPath:name],CFSTR("public.png"),1,NULL);CGImageDestinationAddImage(dst,img,NULL);CGImageDestinationFinalize(dst);CFRelease(dst);CGImageRelease(img);CGContextRelease(ctx);CGColorSpaceRelease(cs);
+}
+int main(){@autoreleasepool{
+ auto atlas=LoadAtlasPixels([NSURL fileURLWithPath:@"resources/atlas.png"]);if(!atlas.data)return 1;
+ OriginalGame game;std::ifstream f("resources/atlas.txt");std::string n;int w,h;float u,v,uw,vh;while(f>>n>>w>>h>>u>>v>>uw>>vh)game.atlas[n]={int(u*1024+.5),int(v*1024+.5),w,h};
+ game.draws={{"bg_day",0,0,0,1},{"pipe_up",-10,274,0,1},{"pipe_down",-10,-142,0,1},{"pipe_up",150,359,0,1},{"pipe_down",150,-57,0,1},{"font_050",132,78,0,1},{"bird0_0",66,136,-20,1},{"land",-4,400,0,1}};
+ ViewLayout layout=ViewLayout::make(440,956,62,34);std::vector<RenderQuad> quads;std::vector<Vertex> vertices;composeFrame(game,game.draws,.5,layout,quads);for(auto& q:quads)appendQuad(vertices,q,layout.width,layout.height);
+ // Desktop legacy OpenGL compiles the same portable GLSL shader sources. This
+ // does not substitute for an actual OpenGL ES driver test on an old iPhone.
+ CGLPixelFormatAttribute attributes[]={kCGLPFAAccelerated,kCGLPFAAllowOfflineRenderers,(CGLPixelFormatAttribute)0};CGLPixelFormatObj pf=NULL;GLint count=0;if(CGLChoosePixelFormat(attributes,&pf,&count)!=kCGLNoError)return 2;CGLContextObj context=NULL;if(CGLCreateContext(pf,NULL,&context)!=kCGLNoError)return 3;CGLDestroyPixelFormat(pf);CGLSetCurrentContext(context);
+ GLuint program=glCreateProgram();const GLenum types[2]={GL_VERTEX_SHADER,GL_FRAGMENT_SHADER};const char* sources[2]={gameGLVertex,gameGLFragment};
+ for(int i=0;i<2;++i){GLuint shader=glCreateShader(types[i]);glShaderSource(shader,1,&sources[i],NULL);glCompileShader(shader);GLint ok=0;glGetShaderiv(shader,GL_COMPILE_STATUS,&ok);if(!ok){char log[4096];glGetShaderInfoLog(shader,sizeof(log),NULL,log);std::cerr<<log;return 4;}glAttachShader(program,shader);}
+ glBindAttribLocation(program,0,"position");glBindAttribLocation(program,1,"texcoord");glBindAttribLocation(program,2,"alpha");glLinkProgram(program);GLint ok=0;glGetProgramiv(program,GL_LINK_STATUS,&ok);if(!ok)return 5;
+ GLuint texture,target,fb,vbo;glGenTextures(1,&texture);glBindTexture(GL_TEXTURE_2D,texture);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,atlas.width,atlas.height,0,GL_RGBA,GL_UNSIGNED_BYTE,atlas.data.bytes);
+ glGenTextures(1,&target);glBindTexture(GL_TEXTURE_2D,target);glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,W,H,0,GL_RGBA,GL_UNSIGNED_BYTE,NULL);glGenFramebuffersEXT(1,&fb);glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fb);glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_TEXTURE_2D,target,0);if(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT)!=GL_FRAMEBUFFER_COMPLETE_EXT)return 6;
+ glViewport(0,0,W,H);glClearColor(0,0,0,1);glClear(GL_COLOR_BUFFER_BIT);glUseProgram(program);glEnable(GL_BLEND);glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);glActiveTexture(GL_TEXTURE0);glBindTexture(GL_TEXTURE_2D,texture);glUniform1i(glGetUniformLocation(program,"atlas"),0);glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);glBufferData(GL_ARRAY_BUFFER,vertices.size()*sizeof(Vertex),vertices.data(),GL_STATIC_DRAW);for(int i=0;i<3;++i)glEnableVertexAttribArray(i);glVertexAttribPointer(0,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*)0);glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*)8);glVertexAttribPointer(2,1,GL_FLOAT,GL_FALSE,sizeof(Vertex),(void*)16);glDrawArrays(GL_TRIANGLES,0,vertices.size());glFinish();if(glGetError()!=GL_NO_ERROR)return 7;
+ std::vector<uint8_t> raw(W*H*4),glPixels(W*H*4),metalPixels(W*H*4);glReadPixels(0,0,W,H,GL_RGBA,GL_UNSIGNED_BYTE,raw.data());for(int row=0;row<H;++row)memcpy(glPixels.data()+row*W*4,raw.data()+(H-1-row)*W*4,W*4);save(glPixels,@"build/compat-opengl.png");
+ id<MTLDevice> device=MTLCreateSystemDefaultDevice();NSError* error=nil;id<MTLLibrary> lib=[device newLibraryWithSource:@(gameShaderSource) options:nil error:&error];MTLRenderPipelineDescriptor* pd=[MTLRenderPipelineDescriptor new];pd.vertexFunction=[lib newFunctionWithName:@"sprite_vertex"];pd.fragmentFunction=[lib newFunctionWithName:@"sprite_fragment"];auto attachment=pd.colorAttachments[0];attachment.pixelFormat=MTLPixelFormatRGBA8Unorm;attachment.blendingEnabled=YES;attachment.sourceRGBBlendFactor=attachment.sourceAlphaBlendFactor=MTLBlendFactorOne;attachment.destinationRGBBlendFactor=attachment.destinationAlphaBlendFactor=MTLBlendFactorOneMinusSourceAlpha;id<MTLRenderPipelineState> pipeline=[device newRenderPipelineStateWithDescriptor:pd error:&error];if(!pipeline)return 8;
+ MTLTextureDescriptor* td=[MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:atlas.width height:atlas.height mipmapped:NO];td.storageMode=MTLStorageModeShared;id<MTLTexture> mt=[device newTextureWithDescriptor:td];[mt replaceRegion:MTLRegionMake2D(0,0,atlas.width,atlas.height) mipmapLevel:0 withBytes:atlas.data.bytes bytesPerRow:atlas.width*4];td.width=W;td.height=H;td.usage=MTLTextureUsageRenderTarget;id<MTLTexture> output=[device newTextureWithDescriptor:td];MTLSamplerDescriptor* sd=[MTLSamplerDescriptor new];sd.minFilter=sd.magFilter=MTLSamplerMinMagFilterLinear;sd.sAddressMode=sd.tAddressMode=MTLSamplerAddressModeClampToEdge;id<MTLSamplerState> sampler=[device newSamplerStateWithDescriptor:sd];id<MTLBuffer> buffer=[device newBufferWithBytes:vertices.data() length:vertices.size()*sizeof(Vertex) options:MTLResourceStorageModeShared];id<MTLCommandQueue> queue=[device newCommandQueue];id<MTLCommandBuffer> command=[queue commandBuffer];MTLRenderPassDescriptor* pass=[MTLRenderPassDescriptor renderPassDescriptor];pass.colorAttachments[0].texture=output;pass.colorAttachments[0].loadAction=MTLLoadActionClear;pass.colorAttachments[0].storeAction=MTLStoreActionStore;pass.colorAttachments[0].clearColor=MTLClearColorMake(0,0,0,1);id<MTLRenderCommandEncoder> encoder=[command renderCommandEncoderWithDescriptor:pass];[encoder setRenderPipelineState:pipeline];[encoder setVertexBuffer:buffer offset:0 atIndex:0];[encoder setFragmentTexture:mt atIndex:0];[encoder setFragmentSamplerState:sampler atIndex:0];[encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:vertices.size()];[encoder endEncoding];[command commit];[command waitUntilCompleted];if(command.error)return 9;[output getBytes:metalPixels.data() bytesPerRow:W*4 fromRegion:MTLRegionMake2D(0,0,W,H) mipmapLevel:0];save(metalPixels,@"build/compat-metal.png");
+ uint64_t errorSum=0,different=0;unsigned maxError=0;for(size_t i=0;i<metalPixels.size();++i){unsigned delta=std::abs(int(metalPixels[i])-int(glPixels[i]));errorSum+=delta;maxError=std::max(maxError,delta);if(delta>2)++different;}
+ double mean=double(errorSum)/metalPixels.size();std::cout<<"OpenGL/Metal readback: mean channel error="<<mean<<", max="<<maxError<<", channels differing by >2="<<different<<"\n";
+ int floorStart=int((layout.offsetY+440)/layout.height*H)+1;for(int y=floorStart;y<H;++y)for(int x=0;x<W;++x)for(int c=0;c<4;++c)if(glPixels[(y*W+x)*4+c]!=glPixels[((H-1)*W+W-1)*4+c])return 10;
+ if(mean>1.0)return 11;std::cout<<"GPU backend comparison passed (desktop drivers only)\n";
+ CGLSetCurrentContext(NULL);CGLDestroyContext(context);
+}}

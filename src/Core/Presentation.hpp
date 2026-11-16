@@ -16,13 +16,13 @@ public:
     int advance(double timestamp) {
         if(!primed){primed=true;last=timestamp;return 1;}
         // Bound catch-up after system pauses; avoid a long main-thread stall.
-        remainder += std::clamp(timestamp-last,0.0,0.1);
+        remainder += clampValue(timestamp-last,0.0,0.1);
         last=timestamp;
         int ticks=static_cast<int>((remainder+1e-9)/step);
         remainder=std::max(0.0,remainder-ticks*step);
         return ticks;
     }
-    float blend() const {return static_cast<float>(std::clamp(remainder/step,0.0,1.0));}
+    float blend() const {return static_cast<float>(clampValue(remainder/step,0.0,1.0));}
 };
 struct ViewLayout {
     float width=288,height=512,offsetX=0,offsetY=0,scale=1;
@@ -32,7 +32,7 @@ struct ViewLayout {
         l.scale=std::min(pointsWidth/288.f,pointsHeight/512.f);
         l.width=pointsWidth/l.scale;l.height=pointsHeight/l.scale;
         l.offsetX=(l.width-288)/2;
-        l.offsetY=std::clamp((l.height-512+(safeTop-safeBottom)/l.scale)/2,0.f,std::max(0.f,l.height-512));
+        l.offsetY=clampValue((l.height-512+(safeTop-safeBottom)/l.scale)/2,0.f,std::max(0.f,l.height-512));
         return l;
     }
     int inputX(float x) const {return static_cast<int>(x/scale-offsetX);}

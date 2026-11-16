@@ -20,10 +20,13 @@ jobs:
         run: python3 scripts/test.py
       - name: Build unsigned device IPA
         run: python3 scripts/build.py
+      - name: Audit universal IPA and legacy imports
+        run: python3 scripts/audit_ipa.py
       - uses: actions/upload-artifact@v7.0.2
         with:
-          name: FlappyBird-unsigned-IPA
+          name: FlappyBird-iOS5-27-universal-unsigned
           path: |
             dist/*.ipa
-            dist/SHA256SUMS.txt
+            dist/*.sha256
+            dist/compatibility-audit.json
           if-no-files-found: error
