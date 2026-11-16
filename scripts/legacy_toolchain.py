@@ -34,7 +34,7 @@ def extract(archive,destination,strip=False):
 
 def prepare():
     sdk=CACHE/'iPhoneOS9.3.sdk';libcxx=CACHE/'libcxx'
-    if not (CACHE/'prepared-v3').exists():
+    if not (CACHE/'prepared-v4').exists():
         archive=fetch('iPhoneOS9.3.sdk.tar.xz',SDK_URL,SDK_SHA)
         headers=fetch('libcxx37.tar.gz',LIBCXX_URL,LIBCXX_SHA)
         if sdk.exists():shutil.rmtree(sdk)
@@ -54,6 +54,10 @@ def prepare():
             p.write_text(''.join(output))
         # The curated SDK omits these longstanding libSystem memory exports.
         p=sdk/'usr/lib/libSystem.B.tbd';p.write_text(p.read_text().replace('symbols:            [','symbols:            [ _memcmp, _memcpy, _memmove, _memset, _bzero, _bcopy,',1))
+        # This archive lists liblaunch as a re-export but omits its stub. Older
+        # ld versions eagerly load it even though this app imports no launch API.
+        # Remove the dangling SDK metadata edge; the OS libSystem is unchanged.
+        p.write_text(p.read_text().replace('/usr/lib/system/liblaunch.dylib,',''))
         p=sdk/'usr/lib/libc++abi.tbd';text=p.read_text()
         for symbol in OLD_CXX_EXPORTS:text=re.sub(r'(?<!\w)'+re.escape(symbol)+r'\s*,','',text)
         p.write_text(text)
@@ -63,7 +67,7 @@ def prepare():
         p=sdk/'System/Library/Frameworks/CoreFoundation.framework/CoreFoundation.tbd';p.write_text(p.read_text().replace('objc-classes:       [','objc-classes:       [ _NSObject,',1))
         # Match the historical string constructor declaration under modern clang.
         p=libcxx/'include/string';text=p.read_text();text=text.replace('basic_string<_CharT, _Traits, _Allocator>::basic_string(const allocator_type& __a)\n    :','basic_string<_CharT, _Traits, _Allocator>::basic_string(const allocator_type& __a)\n#if _LIBCPP_STD_VER <= 14\n    _NOEXCEPT_(is_nothrow_copy_constructible<allocator_type>::value)\n#else\n    _NOEXCEPT\n#endif\n    :');p.write_text(text)
-        (CACHE/'prepared-v3').write_text('Pinned SDK and headers; compatibility normalization version 3\n')
+        (CACHE/'prepared-v4').write_text('Pinned SDK and headers; compatibility normalization version 4\n')
     return sdk,libcxx/'include'
 if __name__=='__main__':
     print(*prepare(),sep='\n')
