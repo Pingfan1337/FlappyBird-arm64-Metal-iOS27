@@ -8,6 +8,7 @@
 // Coordinates are collision-box top-left, in the original 288x512 canvas.
 // Keep binary32 arithmetic and integer truncation; do not integrate with dt.
 namespace flappy12 {
+template<class T> inline T clampValue(T value,T low,T high) {return std::min(high,std::max(low,value));}
 struct OriginalBird {
     static constexpr int width = 20, height = 20;
     static constexpr int spriteOffsetX = 14, spriteOffsetY = 14;
@@ -67,7 +68,7 @@ struct OriginalBird {
         }
         angle += angularVelocity;
         angularVelocity += angularAcceleration;
-        angle = std::clamp(angle, -20.0f, 90.0f);
+        angle = clampValue(angle, -20.0f, 90.0f);
     }
 
     // Original rendering truncates angle and the combined hover offset.

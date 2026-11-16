@@ -6,5 +6,14 @@
   "sfx_die.caf": "cacd93bdcaf04a32f361bc3273dc8d6959227b1edd89cbc9efdfd779d965e695",
   "sfx_hit.caf": "3234107d6239bcf123be6752c4a6505546c5b54db306fed7604fd1ff810afe7c",
   "sfx_wing.caf": "afe8c6eb67f1a8213cdd7b1aaa4cb5f9d518982ab59964cdc2d3326d55a6d69a",
-  "AppIcon60x60@2x.png": "718d2628b79eee31264f0f0fb114bc8734c3b0a06e6e373cc3a6c9722f73747f"
+  "AppIcon60x60@2x.png": "718d2628b79eee31264f0f0fb114bc8734c3b0a06e6e373cc3a6c9722f73747f",
+  "Default.png": "baf0fb15c1c8278e0c6f7b8b6b2ab3d4c440cd7136b5b9db080b8f1db35a65ab",
+  "Default@2x.png": "b9deaeab4140ed044b18d4faeca573451e818e1c6a39328c49eb9c77eb1dcd13",
+  "Default-568h@2x.png": "ff19109ea6b76de094c4ba7135d92716325e8b6cab66afbf39f4963e1a21d1ea",
+  "Default-Portrait~ipad.png": "f7ad1f94009cf8f24a4109745536473aa05f6f138921dfa9a2c9786baea8146f",
+  "Default-Portrait@2x~ipad.png": "d5f8411bcc3d92852da36585c10bf2afc91c8107c01da99ed8974161cd3f7a4e",
+  "AppIcon57x57.png": "d7787ae78ce627688ac427ea1351efc16aa9f2f738f9bec3c8fc1e5f8294d161",
+  "AppIcon57x57@2x.png": "dfe0472f3dd5b602dd5cdede2b02ccf3b1b3f646fd13eaee38b734c917b18473",
+  "AppIcon72x72~ipad.png": "86e05c9bd6cec47d34e1c2324615951dd3f1b0e655dc35fab058e65bbe19c8c8",
+  "AppIcon72x72@2x~ipad.png": "5f71ef41f298ca59e4b215f8f4d747670dbca0061c2607f6a0684deae3f4885f"
 }

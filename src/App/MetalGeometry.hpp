@@ -1,8 +1,9 @@
 #pragma once
 #include "../Core/Presentation.hpp"
-#include <simd/simd.h>
+
 #include <vector>
-struct Vertex {simd_float2 position,uv;float alpha;};
+struct alignas(8) VertexPoint {float x,y;};
+struct Vertex {VertexPoint position,uv;float alpha;};
 static_assert(sizeof(Vertex)==24,"Metal vertex ABI");
 inline void appendQuad(std::vector<Vertex>& vertices,const flappy12::RenderQuad& r,float width,float height) {
     float xs[]={r.x,r.x+r.w,r.x+r.w,r.x},ys[]={r.y+r.h,r.y+r.h,r.y,r.y};

@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.1.0-compat.1 — 2026-11-16 (prerelease)
+
+Experimental universal compatibility candidate, app build **12006**. Target range: iOS 5–27; this is not a claim that every device or system has been tested. Stable v1.0.0 is unchanged.
+
+- One FAT32 IPA executable with armv7 / iOS 5 and arm64 / iOS 7 slices.
+- OpenGL ES 2 renderer for legacy systems; retain native Metal and CAMetalDisplayLink on modern systems. CADisplayLink provides the fallback scheduler.
+- Share gameplay, vertex layout, atlas decoding, interpolation and full-screen composition between renderers. Extend skyline and ground tiles horizontally on 3:2 phones and 3:4 iPads without moving gameplay objects.
+- Preloaded AVAudioPlayer fallback before iOS 8, keeping playback work on the audio queue.
+- AppDelegate window startup before iOS 13, guarded modern APIs, weak framework imports, legacy launch images/icons and an iOS 8+ launch storyboard.
+- Pinned legacy SDK/C++ headers bootstrap with SHA-256 checks; compile ARC objects separately to avoid libarclite injection. Locally provide availability checks using iOS 5 APIs.
+- Restore historical NSObject/C++ symbol provider libraries in the armv7 linker stubs; all 200 strong armv7 imports were checked against iOS 5.0 SDK exports. A supplementary iOS 7.1 SDK check covered all 155 strong arm64 imports (not an iOS 7.0 runtime test).
+- Audit actual Mach-O entry points, minimum versions, imports, resources and absence of chained fixups. CI builds and audits the universal IPA.
+- Host regressions passed. Desktop GL/Metal readback comparison: max channel difference 1/255, no channels differ by more than 2/255; ground occlusion passed. These desktop checks do not verify iPhone GLES drivers.
+- **Pending:** installation, startup, gameplay, sound and resume on the owner's jailbroken iPhone 4S / iOS 6.1.3, plus modern-device regression testing. iOS 5 and iPad remain untested.
+
 ## v1.0.0 — 2026-11-16
 
 First public release: an arm64-native, Metal-rendered revival targeting iOS 27. Game display version: **1.2**. Native application build: **12005**.
